@@ -6,7 +6,7 @@ const char* ssid = "Manfred";
 const char* password = "Mc--050629";
 
 // Node.js server address
-const char* serverUrl = "https://view-regularly-electronics-circuit.trycloudflare.com/update"; // Replace <your-server-ip> with the Node.js server IP
+const char* serverUrl = "https://iii-airlines-prize-protection.trycloudflare.com"; // Replace <your-server-ip> with the Node.js server IP
 
 #define DHTPIN 13
 #define LDRPIN 34
