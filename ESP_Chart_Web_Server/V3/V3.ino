@@ -1,17 +1,20 @@
 #include <WiFi.h>
 #include <HTTPClient.h>
+#include <WebServer.h>
 #include <DHT.h>
 // WiFi credentials
 const char* ssid = "Manfred";
 const char* password = "Mc--050629";
-
+const char* apiKey = "YY1BG1HN7M5FAYGK";
 // Node.js server address
-const char* serverUrl = "https://iii-airlines-prize-protection.trycloudflare.com"; // Replace <your-server-ip> with the Node.js server IP
+String serverUrl = "https://api.thingspeak.com/update"; // Replace <your-server-ip> with the Node.js server IP
 
 #define DHTPIN 13
 #define LDRPIN 34
 
+uint8_t httpResponseCode;
 DHT dht(DHTPIN, DHT11);
+WebServer server(80);
 
 String readDHTTemperature() {
   float t = dht.readTemperature();
@@ -31,9 +34,14 @@ String readLightIntensity() {
   return String(t);
 }
 
+void handleData(){
+  String payload = "{\"temperature\":" + readDHTTemperature() + ",\"light\":" + readLightIntensity() + "}";
+  server.send(200, "application/json", payload);
+}
+
 void setup() {
   Serial.begin(115200);
-
+   
   // Connect to Wi-Fi
   WiFi.begin(ssid, password);
   while (WiFi.status() != WL_CONNECTED) {
@@ -42,21 +50,19 @@ void setup() {
   }
   Serial.println("Connected to WiFi");
   Serial.println(WiFi.localIP());
+  server.on("/data", handleData);
+  server.begin();
 }
 
 void loop() {
-
+  server.handleClient();
   // Send data to Node.js server
   if (WiFi.status() == WL_CONNECTED) {
     HTTPClient http;
-    http.begin(serverUrl);
-    http.addHeader("Content-Type", "application/json");
-
-    // Create JSON payload
-    String payload = "{\"temperature\":" + readDHTTemperature() + ",\"light\":" + readLightIntensity() + "}";
-    int httpResponseCode = http.POST(payload);
-
-    if (httpResponseCode > 0) {
+    String payload = serverUrl + "?api_key=" + apiKey + "&field1=" + readDHTTemperature();
+    http.begin(payload);
+    int httpResponseCode = http.GET();
+    if (httpResponseCode == HTTP_CODE_OK) {
       Serial.println("Data sent: " + payload);
       Serial.println("Response: " + http.getString());
     } else {

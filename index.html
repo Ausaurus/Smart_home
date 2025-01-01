@@ -80,23 +80,35 @@ setInterval(function () {
       var x = (new Date()).getTime();
 
       // Update temperature chart
-      var temp = parseFloat(response.temperature);
+      var temp = parseFloat(response.field1);
       if (chartT.series[0].data.length > 40) {
         chartT.series[0].addPoint([x, temp], true, true, true);
       } else {
         chartT.series[0].addPoint([x, temp], true, false, true);
       }
+    }
+  };
+  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/1.json", true);
+  xhttp.send();
+}, 7000);
 
-      // Update light chart
-      var light = parseFloat(response.light);
-      if (chartL.series[0].data.length > 40) {
-        chartL.series[0].addPoint([x, light], true, true, true);
+setInterval(function () {
+  var xhttp = new XMLHttpRequest();
+  xhttp.onreadystatechange = function() {
+    if (this.readyState == 4 && this.status == 200) {
+      var response = JSON.parse(this.responseText);
+      var x = (new Date()).getTime();
+
+      // Update temperature chart
+      var temp = parseFloat(response.field2);
+      if (chartT.series[0].data.length > 40) {
+        chartT.series[0].addPoint([x, temp], true, true, true);
       } else {
-        chartL.series[0].addPoint([x, light], true, false, true);
+        chartT.series[0].addPoint([x, temp], true, false, true);
       }
     }
   };
-  xhttp.open("GET", "https://iii-airlines-prize-protection.trycloudflare.com/data", true);
+  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/2.json", true);
   xhttp.send();
 }, 7000);
 </script>

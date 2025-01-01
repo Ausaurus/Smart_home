@@ -82,6 +82,7 @@ void setup() {
   WiFi.begin(ssid, password);
   telegramClient.setCACert(TELEGRAM_CERTIFICATE_ROOT);
   httpClient.setCACert(caCert);
+  httpClient.setInsecure();
   while (WiFi.status() != WL_CONNECTED){
     delay(1000);
     Serial.print(".");
@@ -95,15 +96,43 @@ void loop() {
   // put your main code here, to run repeatedly:
   
   http.begin(httpClient, "https://send-json-data.manfredcheongyushean.workers.dev/");
+  if (httpClient.connect("send-json-data.manfredcheongyushean.workers.dev", 443)) {
+  Serial.println("Connection successful");
+  } else {
+  Serial.println("Connection failed");
+  }
 
-  Serial.println("HTTP Client subscribed to server");
+  /*Serial.println("HTTP Client subscribed to server");
   int httpCode = http.GET();
   if (httpCode > 0) {
+    Serial.println("HTTP Response code: ");
     Serial.println(httpCode);
     if (httpCode == HTTP_CODE_OK){
       String payload = http.getString();
       Serial.println(payload);
+      StaticJsonDocument<200> doc;
+      DeserializationError error = deserializeJson(doc, payload);
+
+      if (!error) {
+        // Extract JSON values
+        float temperature = doc["temperature"];
+        int light = doc["Light"];
+
+        // Print the extracted values
+        Serial.print("Temperature: ");
+        Serial.println(temperature);
+        Serial.print("Light: ");
+        Serial.println(light);
+      } else {
+        Serial.print("JSON Parsing Error: ");
+        Serial.println(error.c_str());
+      }
     }
+  } else {
+    Serial.print("Error Code: ");
+    Serial.println(httpCode);
+  
   }
-  delay(30000);
+  http.end();*/
+  delay(5000);
 }
