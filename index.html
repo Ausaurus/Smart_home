@@ -22,6 +22,15 @@
   <div id="chart-light" class="container"></div>
 </body>
 <script>
+function getDateRange() {
+  const now = new Date();
+  const today = now.toISOString().split('T')[0];
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  return { start: yesterdayStr, end: today };
+}
+
 var chartT = new Highcharts.Chart({
   chart: { renderTo: 'chart-temperature', type: 'line' },
   title: { text: 'Temperature Over Time' },
@@ -56,6 +65,7 @@ var chartL = new Highcharts.Chart({
 
 // Fetch all data for field 1 (Temperature)
 function fetchAllDataField1() {
+  const dateRange = getDateRange();
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -76,12 +86,13 @@ function fetchAllDataField1() {
       chartT.series[0].setData(dataPoints, true);
     }
   };
-  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/1.json", true);
+  xhttp.open("GET", `https://api.thingspeak.com/channels/2788337/fields/1.json?start=${dateRange.start}&end=${dateRange.end}`, true);
   xhttp.send();
 }
 
 // Fetch all data for field 2 (Light Intensity)
 function fetchAllDataField2() {
+  const dateRange = getDateRange();
   var xhttp = new XMLHttpRequest();
   xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
@@ -102,7 +113,7 @@ function fetchAllDataField2() {
       chartL.series[0].setData(dataPoints, true);
     }
   };
-  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/2.json", true);
+  xhttp.open("GET", `https://api.thingspeak.com/channels/2788337/fields/2.json?start=${dateRange.start}&end=${dateRange.end}`, true);
   xhttp.send();
 }
 
