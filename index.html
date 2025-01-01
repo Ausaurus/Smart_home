@@ -77,10 +77,11 @@ setInterval(function () {
   xhttp.onreadystatechange = function() {
     if (this.readyState == 4 && this.status == 200) {
       var response = JSON.parse(this.responseText);
+      var latestFeed = response.feeds[response.feeds.length - 1];
       var x = (new Date()).getTime();
 
       // Update temperature chart
-      var temp = parseFloat(response.field1);
+      var temp = parseFloat(latestFeed.field1);
       if (chartT.series[0].data.length > 40) {
         chartT.series[0].addPoint([x, temp], true, true, true);
       } else {
@@ -98,13 +99,13 @@ setInterval(function () {
     if (this.readyState == 4 && this.status == 200) {
       var response = JSON.parse(this.responseText);
       var x = (new Date()).getTime();
-
+      var latestFeed = response.feeds[response.feeds.length - 1];
       // Update temperature chart
-      var temp = parseFloat(response.field2);
-      if (chartT.series[0].data.length > 40) {
-        chartT.series[0].addPoint([x, temp], true, true, true);
+      var temp = parseFloat(latestFeed.field2);
+      if (chartL.series[0].data.length > 40) {
+        chartL.series[0].addPoint([x, temp], true, true, true);
       } else {
-        chartT.series[0].addPoint([x, temp], true, false, true);
+        chartL.series[0].addPoint([x, temp], true, false, true);
       }
     }
   };
