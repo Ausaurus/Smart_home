@@ -1,10 +1,5 @@
-<!DOCTYPE HTML><html>
-<!-- Rui Santos - Complete project details at https://RandomNerdTutorials.com
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files.
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software. -->
+<!DOCTYPE HTML>
+<html>
 <head>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <script src="https://code.highcharts.com/highcharts.js"></script>
@@ -25,92 +20,92 @@ copies or substantial portions of the Software. -->
 <body>
   <h2>ESP Weather Station</h2>
   <div id="chart-temperature" class="container"></div>
-  <div id="chart-light" class="container"></div>
 </body>
 <script>
 var chartT = new Highcharts.Chart({
-  chart: { renderTo: 'chart-temperature' },
-  title: { text: 'BME280 Temperature' },
+  chart: { renderTo: 'chart-temperature', type: 'line' },
+  title: { text: 'Temperature Over Time' },
   series: [{
-    showInLegend: false,
+    name: 'Temperature',
     data: []
   }],
   plotOptions: {
-    line: { animation: false,
-      dataLabels: { enabled: true }
-    },
+    line: { animation: false, dataLabels: { enabled: true } },
     series: { color: '#059e8a' }
   },
-  xAxis: { type: 'datetime',
-    dateTimeLabelFormats: { second: '%H:%M:%S' }
-  },
-  yAxis: {
-    title: { text: 'Temperature (Celsius)' }
-  },
+  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
+  yAxis: { title: { text: 'Temperature (Celsius)' } },
   credits: { enabled: false }
 });
 
 var chartL = new Highcharts.Chart({
-  chart: { renderTo: 'chart-light' },
-  title: { text: 'Light Intensity' },
+  chart: { renderTo: 'chart-light', type: 'line' },
+  title: { text: 'Light Intensity Over Time' },
   series: [{
-    showInLegend: false,
+    name: 'Light Intensity',
     data: []
   }],
   plotOptions: {
-    line: { animation: false,
-      dataLabels: { enabled: true }
-    },
-    series: { color: '#ffa500' }
+    line: { animation: false, dataLabels: { enabled: true } },
+    series: { color: '#059e8a' }
   },
-  xAxis: { type: 'datetime',
-    dateTimeLabelFormats: { second: '%H:%M:%S' }
-  },
-  yAxis: {
-    title: { text: 'Light Intensity (Lux)' }
-  },
+  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
+  yAxis: { title: { text: 'Light Intensity' } },
   credits: { enabled: false }
 });
 
-setInterval(function () {
+// Fetch all data and plot
+function fetchAllData() {
   var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
+  xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       var response = JSON.parse(this.responseText);
-      var latestFeed = response.feeds[response.feeds.length - 1];
-      var x = (new Date()).getTime();
+      var feeds = response.feeds;
+      var dataPoints = [];
 
-      // Update temperature chart
-      var temp = parseFloat(latestFeed.field1);
-      if (chartT.series[0].data.length > 40) {
-        chartT.series[0].addPoint([x, temp], true, true, true);
-      } else {
-        chartT.series[0].addPoint([x, temp], true, false, true);
-      }
+      // Process all data points
+      feeds.forEach(feed => {
+        var timestamp = new Date(feed.created_at).getTime();
+        var value = parseFloat(feed.field1);
+        if (!isNaN(value)) {
+          dataPoints.push([timestamp, value]);
+        }
+      });
+
+      // Plot all data points
+      chartT.series[0].setData(dataPoints, true);
     }
   };
   xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/1.json", true);
   xhttp.send();
-}, 7000);
+}
 
-setInterval(function () {
+function fetchAllData() {
   var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function() {
+  xhttp.onreadystatechange = function () {
     if (this.readyState == 4 && this.status == 200) {
       var response = JSON.parse(this.responseText);
-      var x = (new Date()).getTime();
-      var latestFeed = response.feeds[response.feeds.length - 1];
-      // Update temperature chart
-      var temp = parseFloat(latestFeed.field2);
-      if (chartL.series[0].data.length > 40) {
-        chartL.series[0].addPoint([x, temp], true, true, true);
-      } else {
-        chartL.series[0].addPoint([x, temp], true, false, true);
-      }
+      var feeds = response.feeds;
+      var dataPoints = [];
+
+      // Process all data points
+      feeds.forEach(feed => {
+        var timestamp = new Date(feed.created_at).getTime();
+        var value = parseFloat(feed.field2);
+        if (!isNaN(value)) {
+          dataPoints.push([timestamp, value]);
+        }
+      });
+
+      // Plot all data points
+      chartL.series[0].setData(dataPoints, true);
     }
   };
   xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/2.json", true);
   xhttp.send();
-}, 7000);
+}
+
+// Fetch and plot data on load
+fetchAllData();
 </script>
 </html>
