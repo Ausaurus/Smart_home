@@ -11,7 +11,8 @@ String serverUrl = "https://api.thingspeak.com/update"; // Replace <your-server-
 
 #define DHTPIN 13
 #define LDRPIN 34
-
+unsigned long lastTimeDataSent = 0;
+const unsigned long ThingSpeakRequestDelay = 17000;
 uint8_t httpResponseCode;
 DHT dht(DHTPIN, DHT11);
 WebServer server(80);
@@ -37,6 +38,7 @@ String readLightIntensity() {
 void handleData(){
   String payload = "{\"temperature\":" + readDHTTemperature() + ",\"light\":" + readLightIntensity() + "}";
   server.send(200, "application/json", payload);
+  Serial.println("sent");
 }
 
 void setup() {
@@ -57,21 +59,29 @@ void setup() {
 void loop() {
   server.handleClient();
   // Send data to Node.js server
-  if (WiFi.status() == WL_CONNECTED) {
+  if (millis() > lastTimeDataSent + ThingSpeakRequestDelay) {
     HTTPClient http;
-    String payload = serverUrl + "?api_key=" + apiKey + "&field1=" + readDHTTemperature();
-    http.begin(payload);
-    int httpResponseCode = http.GET();
-    if (httpResponseCode == HTTP_CODE_OK) {
-      Serial.println("Data sent: " + payload);
+
+    // Combine temperature and light intensity into one request
+    String url = serverUrl + "?api_key=" + apiKey +
+                 "&field1=" + readDHTTemperature() +
+                 "&field2=" + readLightIntensity();
+
+    Serial.println("Generated URL: " + url);
+    http.begin(url);
+
+    int httpResponse = http.GET();
+    if (httpResponse == HTTP_CODE_OK) {
+      Serial.println("Data sent successfully");
       Serial.println("Response: " + http.getString());
     } else {
-      Serial.println("Error sending data: " + String(httpResponseCode));
+      Serial.println("Error sending data: " + String(httpResponse));
     }
-
     http.end();
+
+    lastTimeDataSent = millis();
   }
 
-  delay(5000); // Wait 5 seconds before sending again
+  delay(3000); // Wait 5 seconds before sending again
 }
 
