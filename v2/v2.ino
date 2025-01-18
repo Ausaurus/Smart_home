@@ -19,7 +19,7 @@ const int pwmResolution = 8;
 
 const char* ssid = "Lianbushangshizhu";
 const char* password = "Klwk0405";
-const char* ESPServerURL = "http://198.168.3.184/data";
+const char* ESPServerURL = "https://api.thingspeak.com/channels/2788337/feeds.json?results=1";
 const char* BOTtoken = "7141256945:AAHdeNQBtXb0LLy3BvvNIuvje9CFH8vbIUU";
 const char* CHAT_ID = "969257011";
 
@@ -27,7 +27,9 @@ WiFiClientSecure client;
 UniversalTelegramBot bot(BOTtoken, client);
 
 unsigned long lastTimeBotRan = 0;
-const unsigned long botRequestDelay = 5000;
+const unsigned long botRequestDelay = 6000;
+unsigned long lastTimeCheck = 0;
+const unsigned long checkRequestDelay = 17000;
 
 bool ledState = false;
 bool fanState = false;
@@ -52,7 +54,8 @@ void setup() {
   pinMode(ENA, OUTPUT);
   ledcSetup(pwmChannel, pwmFreq, pwmResolution);
   ledcAttachPin(ENA, pwmChannel);
-  // Set LED and Fan Pins as Output
+  
+  // Set LED as Output
   pinMode(LEDPIN, OUTPUT);
 
   Serial.println("System Initialized");
@@ -61,12 +64,11 @@ void setup() {
 void handlePins(float t, float l) {
   if (ledAutomation) {
     if (l > 2000) {
-    digitalWrite(LEDPIN, HIGH);
-    ledState = 1;
-    }
-    else {
-    digitalWrite(LEDPIN, LOW);
-    ledState = 0;
+      digitalWrite(LEDPIN, HIGH);
+      ledState = 1;
+    } else {
+      digitalWrite(LEDPIN, LOW);
+      ledState = 0;
     }
   }
   
@@ -94,40 +96,52 @@ void stopMotor() {
 }
 
 void loop() {
-  if (millis() > lastTimeBotRan + botRequestDelay) {
-    if (ledAutomation == 1 || fanAutomation == 1) {
-      if (WiFi.status() == WL_CONNECTED){
-      HTTPClient http;
-      http.begin(ESPServerURL);
-      int httpcode = http.GET();
-      Serial.println(httpcode);
-      if (httpcode > 0){
-        String payload = http.getString();
-        Serial.println("Received: " + payload);
-        StaticJsonDocument<200> doc;
-        DeserializationError error = deserializeJson(doc, payload);
-        if (error) {
-        Serial.print("JSON Parsing failed: ");
-        Serial.println(error.c_str());
-        return;
-        }
-        float temp = doc["temperature"];
-        float LDR = doc["light"];
-        Serial.println(temp);
-        Serial.println(LDR);
-        handlePins(temp, LDR);
-      } else {
-        Serial.println("Error HTTP");
-      } 
-      http.end();
+  if (ledAutomation == 1 || fanAutomation == 1) {
+    if (WiFi.status() == WL_CONNECTED){
+      if (millis() > lastTimeCheck + checkRequestDelay) {
+        HTTPClient http;
+        http.begin(ESPServerURL);
+        int httpCode = http.GET();
+        Serial.println(httpCode);
+        if (httpCode > 0) {
+          String payload = http.getString();
+          Serial.println("Received: " + payload);
+
+          StaticJsonDocument<1024> doc;
+          DeserializationError error = deserializeJson(doc, payload);
+          if (error) {
+            Serial.print("JSON Parsing failed: ");
+            Serial.println(error.c_str());
+            return;
+          }
+
+          JsonObject feed = doc["feeds"][0]; // Extract the first feed
+          float lightIntensity = feed["field2"].as<float>(); // Extract field1
+          float temperature = feed["field1"].as<float>();    // Extract field2
+
+          Serial.print("Light Intensity: ");
+          Serial.println(lightIntensity);
+
+          Serial.print("Temperature: ");
+          Serial.println(temperature);
+
+          handlePins(temperature, lightIntensity);
+        } else {
+          Serial.println("Error HTTP");
+        } 
+        http.end();
+        lastTimeCheck = millis();
       }
     }
+  }
+  if (millis() > lastTimeBotRan + botRequestDelay) {
+    
     int numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-      while (numNewMessages) {
-        Serial.println("New message received");
-        handleNewMessages(numNewMessages);
-        numNewMessages = bot.getUpdates(bot.last_message_received + 1);
-      }
+    while (numNewMessages) {
+      Serial.println("New message received");
+      handleNewMessages(numNewMessages);
+      numNewMessages = bot.getUpdates(bot.last_message_received + 1);
+    }
     lastTimeBotRan = millis();    
   }   
 }
@@ -145,7 +159,7 @@ void handleNewMessages(int numNewMessages) {
     String text = bot.messages[i].text;
     Serial.println(text);
     String from_name = bot.messages[i].from_name;
-    if (text == "/start") { // Fixed comparison operator
+    if (text == "/start") {
       String welcome = "Welcome, " + from_name + ".\n";
       welcome += "Use the following commands to control the LED:\n\n";
       welcome += "/turn_on_LED \n";
@@ -156,14 +170,12 @@ void handleNewMessages(int numNewMessages) {
       welcome += "/chart \n";
       if (ledState == 1) {
         welcome += "LED is on \n";
-      }
-      else if (ledState == 0){
+      } else if (ledState == 0){
         welcome += "LED is off \n";
       }
       if (fanState == 1) {
         welcome += "FAN is on \n";
-      }
-      else if (fanState == 0){
+      } else if (fanState == 0){
         welcome += "FAN is off \n";
       }
       bot.sendMessage(chat_id, welcome, "");
@@ -202,7 +214,7 @@ void handleNewMessages(int numNewMessages) {
       ledAutomation = 1;
       fanAutomation = 1;
     }
-    if (text== "/chart") {
+    if (text == "/chart") {
       String message = "https://smart-home-b6i.pages.dev/";
       bot.sendMessage(chat_id, message, "");
     }

@@ -3,8 +3,8 @@
 #include <WebServer.h>
 #include <DHT.h>
 // WiFi credentials
-const char* ssid = "Manfred";
-const char* password = "Mc--050629";
+const char* ssid = "Lianbushangshizhu";
+const char* password = "Klwk0405";
 const char* apiKey = "YY1BG1HN7M5FAYGK";
 // Node.js server address
 String serverUrl = "https://api.thingspeak.com/update"; // Replace <your-server-ip> with the Node.js server IP
@@ -12,7 +12,7 @@ String serverUrl = "https://api.thingspeak.com/update"; // Replace <your-server-
 #define DHTPIN 13
 #define LDRPIN 34
 unsigned long lastTimeDataSent = 0;
-const unsigned long ThingSpeakRequestDelay = 17000;
+const unsigned long ThingSpeakRequestDelay = 5000;
 uint8_t httpResponseCode;
 DHT dht(DHTPIN, DHT11);
 WebServer server(80);
@@ -35,12 +35,6 @@ String readLightIntensity() {
   return String(t);
 }
 
-void handleData(){
-  String payload = "{\"temperature\":" + readDHTTemperature() + ",\"light\":" + readLightIntensity() + "}";
-  server.send(200, "application/json", payload);
-  Serial.println("sent");
-}
-
 void setup() {
   Serial.begin(115200);
    
@@ -52,12 +46,10 @@ void setup() {
   }
   Serial.println("Connected to WiFi");
   Serial.println(WiFi.localIP());
-  server.on("/data", handleData);
-  server.begin();
 }
 
 void loop() {
-  server.handleClient();
+
   // Send data to Node.js server
   if (millis() > lastTimeDataSent + ThingSpeakRequestDelay) {
     HTTPClient http;
@@ -78,10 +70,7 @@ void loop() {
       Serial.println("Error sending data: " + String(httpResponse));
     }
     http.end();
-
     lastTimeDataSent = millis();
   }
-
-  delay(3000); // Wait 5 seconds before sending again
 }
 
