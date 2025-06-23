@@ -1,113 +1,389 @@
-<!DOCTYPE HTML>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <script src="https://code.highcharts.com/highcharts.js"></script>
-  <style>
-    body {
-      min-width: 310px;
-      max-width: 800px;
-      margin: 0 auto;
-    }
-    h2 {
-      font-family: Arial;
-      font-size: 2.5rem;
-      text-align: center;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Home Sensor Dashboard</title>
+    <script src="https://code.highcharts.com/highcharts.js"></script>
+    <script src="https://code.highcharts.com/modules/exporting.js"></script>
+    <script src="https://code.highcharts.com/modules/accessibility.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #2c3e50);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.8;
+            max-width: 600px;
+            margin: 0 auto;
+            line-height: 1.6;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-container {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .chart {
+            height: 350px;
+            width: 100%;
+        }
+        
+        .status-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .status-card {
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 15px;
+            padding: 25px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .status-card:hover {
+            background: rgba(255, 255, 255, 0.12);
+            transform: translateY(-5px);
+        }
+        
+        .status-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #4facfe;
+        }
+        
+        .status-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .status-unit {
+            font-size: 1.2rem;
+            opacity: 0.7;
+        }
+        
+        .status-threshold {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 50px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9rem;
+            opacity: 0.7;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <h2>ESP Weather Station</h2>
-  <div id="chart-temperature" class="container" style="margin-bottom: 40px;"></div>
-  <div id="chart-light" class="container"></div>
+    <div class="container">
+        <header>
+            <h1>Smart Home Sensor Dashboard</h1>
+            <p class="subtitle">Real-time monitoring of temperature and light intensity with data from ThingSpeak</p>
+        </header>
+        
+        <div class="status-container">
+            <div class="status-card">
+                <div class="status-title">Current Temperature</div>
+                <div class="status-value" id="current-temp">--</div>
+                <div class="status-unit">°C</div>
+                <div class="status-threshold">Fan activates above 30°C</div>
+            </div>
+            
+            <div class="status-card">
+                <div class="status-title">Current Light Intensity</div>
+                <div class="status-value" id="current-light">--</div>
+                <div class="status-unit">Lux</div>
+                <div class="status-threshold">LED activates above 2000 Lux</div>
+            </div>
+        </div>
+        
+        <div class="controls">
+            <button id="refresh-btn">Refresh Data</button>
+            <button id="auto-refresh">Auto Refresh: OFF</button>
+        </div>
+        
+        <div class="dashboard">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">Temperature Monitoring</div>
+                </div>
+                <div id="temperatureChart" class="chart"></div>
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-header">
+                    <div class="chart-title">Light Intensity Monitoring</div>
+                </div>
+                <div id="lightChart" class="chart"></div>
+            </div>
+        </div>
+        
+        <footer>
+            <p>Data provided by ThingSpeak | Last updated: <span id="last-updated">--</span></p>
+            <p>Smart Home Automation System | Real-time IoT Monitoring</p>
+        </footer>
+    </div>
+
+    <script>
+        // Configuration - Replace with your actual ThingSpeak details
+        const channelID = '2788337'; // Replace with your channel ID
+        const apiKey = 'YY1BG1HN7M5FAYGK'; // Replace with your read API key
+        const results = 10; // Number of latest data points to fetch
+        
+        // DOM Elements
+        const tempElem = document.getElementById('current-temp');
+        const lightElem = document.getElementById('current-light');
+        const lastUpdatedElem = document.getElementById('last-updated');
+        const refreshBtn = document.getElementById('refresh-btn');
+        const autoRefreshBtn = document.getElementById('auto-refresh');
+        
+        // Auto-refresh state
+        let autoRefresh = false;
+        let refreshInterval;
+        
+        // Initialize charts
+        const tempChart = Highcharts.chart('temperatureChart', {
+            chart: { type: 'spline', backgroundColor: 'transparent' },
+            title: { text: null },
+            xAxis: { type: 'datetime', gridLineWidth: 0 },
+            yAxis: { 
+                title: { text: 'Temperature (°C)' },
+                gridLineColor: 'rgba(255, 255, 255, 0.1)',
+                plotLines: [{
+                    color: '#FF5252',
+                    width: 2,
+                    value: 30,
+                    dashStyle: 'dash',
+                    label: { text: 'Fan Threshold (30°C)', align: 'right' }
+                }]
+            },
+            legend: { enabled: false },
+            plotOptions: { 
+                spline: { 
+                    marker: { enabled: true, radius: 4 },
+                    lineWidth: 3
+                }
+            },
+            series: [{
+                name: 'Temperature',
+                data: [],
+                color: '#4facfe'
+            }],
+            credits: { enabled: false },
+            tooltip: {
+                headerFormat: '<b>{point.x:%Y-%m-%d %H:%M}</b><br/>',
+                pointFormat: 'Temperature: {point.y:.1f}°C'
+            }
+        });
+        
+        const lightChart = Highcharts.chart('lightChart', {
+            chart: { type: 'spline', backgroundColor: 'transparent' },
+            title: { text: null },
+            xAxis: { type: 'datetime', gridLineWidth: 0 },
+            yAxis: { 
+                title: { text: 'Light Intensity (Lux)' },
+                gridLineColor: 'rgba(255, 255, 255, 0.1)',
+                plotLines: [{
+                    color: '#FFD740',
+                    width: 2,
+                    value: 2000,
+                    dashStyle: 'dash',
+                    label: { text: 'LED Threshold (2000 Lux)', align: 'right' }
+                }]
+            },
+            legend: { enabled: false },
+            plotOptions: { 
+                spline: { 
+                    marker: { enabled: true, radius: 4 },
+                    lineWidth: 3
+                }
+            },
+            series: [{
+                name: 'Light Intensity',
+                data: [],
+                color: '#FFD740'
+            }],
+            credits: { enabled: false },
+            tooltip: {
+                headerFormat: '<b>{point.x:%Y-%m-%d %H:%M}</b><br/>',
+                pointFormat: 'Light: {point.y} Lux'
+            }
+        });
+        
+        // Fetch data from ThingSpeak
+        async function fetchData() {
+            try {
+                const response = await fetch(`https://api.thingspeak.com/channels/${channelID}/feeds.json?api_key=${apiKey}&results=${results}`);
+                const data = await response.json();
+                
+                if (data.feeds && data.feeds.length > 0) {
+                    processData(data.feeds);
+                    
+                    // Update last updated time
+                    const now = new Date();
+                    lastUpdatedElem.textContent = now.toLocaleString();
+                }
+            } catch (error) {
+                console.error('Error fetching data:', error);
+                alert('Failed to load data. Please check your configuration and network connection.');
+            }
+        }
+        
+        // Process fetched data
+        function processData(feeds) {
+            const tempData = [];
+            const lightData = [];
+            
+            // Get the latest data for current values
+            const latestFeed = feeds[feeds.length - 1];
+            tempElem.textContent = latestFeed.field1 ? parseFloat(latestFeed.field1).toFixed(1) : '--';
+            lightElem.textContent = latestFeed.field2 ? parseInt(latestFeed.field2) : '--';
+            
+            // Prepare data for charts
+            feeds.forEach(feed => {
+                const timestamp = new Date(feed.created_at).getTime();
+                
+                if (feed.field1) {
+                    tempData.push([timestamp, parseFloat(feed.field1)]);
+                }
+                
+                if (feed.field2) {
+                    lightData.push([timestamp, parseInt(feed.field2)]);
+                }
+            });
+            
+            // Update charts with new data
+            tempChart.series[0].setData(tempData);
+            lightChart.series[0].setData(lightData);
+        }
+        
+        // Event Listeners
+        refreshBtn.addEventListener('click', fetchData);
+        
+        autoRefreshBtn.addEventListener('click', () => {
+            autoRefresh = !autoRefresh;
+            autoRefreshBtn.textContent = `Auto Refresh: ${autoRefresh ? 'ON' : 'OFF'}`;
+            
+            if (autoRefresh) {
+                fetchData(); // Fetch immediately
+                refreshInterval = setInterval(fetchData, 30000); // Refresh every 30 seconds
+            } else {
+                clearInterval(refreshInterval);
+            }
+        });
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', fetchData);
+    </script>
 </body>
-<script>
-var chartT = new Highcharts.Chart({
-  chart: { renderTo: 'chart-temperature', type: 'line' },
-  title: { text: 'Temperature Over Time' },
-  series: [{
-    name: 'Temperature',
-    data: []
-  }],
-  plotOptions: {
-    line: { animation: false, dataLabels: { enabled: true } },
-    series: { color: '#059e8a' }
-  },
-  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
-  yAxis: { title: { text: 'Temperature (Celsius)' } },
-  credits: { enabled: false }
-});
-
-var chartL = new Highcharts.Chart({
-  chart: { renderTo: 'chart-light', type: 'line' },
-  title: { text: 'Light Intensity Over Time' },
-  series: [{
-    name: 'Light Intensity',
-    data: []
-  }],
-  plotOptions: {
-    line: { animation: false, dataLabels: { enabled: true } },
-    series: { color: '#ffa500' }
-  },
-  xAxis: { type: 'datetime', dateTimeLabelFormats: { second: '%H:%M:%S' } },
-  yAxis: { title: { text: 'Light Intensity (Lux)' } },
-  credits: { enabled: false }
-});
-
-// Fetch the last 20 data points for field 1 (Temperature)
-function fetchLast20DataField1() {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      var response = JSON.parse(this.responseText);
-      var feeds = response.feeds;
-      var dataPoints = [];
-
-      // Process the last 20 data points
-      feeds.forEach(feed => {
-        var timestamp = new Date(feed.created_at).getTime();
-        var value = parseFloat(feed.field1);
-        if (!isNaN(value)) {
-          dataPoints.push([timestamp, value]);
-        }
-      });
-
-      // Plot the last 20 data points
-      chartT.series[0].setData(dataPoints, true);
-    }
-  };
-  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/1.json?results=20", true);
-  xhttp.send();
-}
-
-// Fetch the last 20 data points for field 2 (Light Intensity)
-function fetchLast20DataField2() {
-  var xhttp = new XMLHttpRequest();
-  xhttp.onreadystatechange = function () {
-    if (this.readyState == 4 && this.status == 200) {
-      var response = JSON.parse(this.responseText);
-      var feeds = response.feeds;
-      var dataPoints = [];
-
-      // Process the last 20 data points
-      feeds.forEach(feed => {
-        var timestamp = new Date(feed.created_at).getTime();
-        var value = parseFloat(feed.field2);
-        if (!isNaN(value)) {
-          dataPoints.push([timestamp, value]);
-        }
-      });
-
-      // Plot the last 20 data points
-      chartL.series[0].setData(dataPoints, true);
-    }
-  };
-  xhttp.open("GET", "https://api.thingspeak.com/channels/2788337/fields/2.json?results=20", true);
-  xhttp.send();
-}
-
-// Fetch and plot data for both fields on load
-fetchLast20DataField1();
-fetchLast20DataField2();
-</script>
 </html>
