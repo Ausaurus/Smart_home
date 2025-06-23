@@ -202,8 +202,8 @@
             <div class="status-card">
                 <div class="status-title">Current Light Intensity</div>
                 <div class="status-value" id="current-light">--</div>
-                <div class="status-unit">Lux</div>
-                <div class="status-threshold">LED activates above 2000 Lux</div>
+                <div class="status-unit">PWM</div>
+                <div class="status-threshold">LED activates above 2000 PWM</div>
             </div>
         </div>
         
@@ -291,14 +291,14 @@
             title: { text: null },
             xAxis: { type: 'datetime', gridLineWidth: 0 },
             yAxis: { 
-                title: { text: 'Light Intensity (Lux)' },
+                title: { text: 'Light Intensity (PWM)' },
                 gridLineColor: 'rgba(255, 255, 255, 0.1)',
                 plotLines: [{
                     color: '#FFD740',
                     width: 2,
                     value: 2000,
                     dashStyle: 'dash',
-                    label: { text: 'LED Threshold (2000 Lux)', align: 'right' }
+                    label: { text: 'LED Threshold (2000 PWM)', align: 'right' }
                 }]
             },
             legend: { enabled: false },
@@ -316,7 +316,7 @@
             credits: { enabled: false },
             tooltip: {
                 headerFormat: '<b>{point.x:%Y-%m-%d %H:%M}</b><br/>',
-                pointFormat: 'Light: {point.y} Lux'
+                pointFormat: 'Light: {point.y} PWM'
             }
         });
         
